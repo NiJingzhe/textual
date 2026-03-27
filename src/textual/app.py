@@ -127,6 +127,7 @@ from textual.screen import (
 from textual.signal import Signal
 from textual.theme import BUILTIN_THEMES, Theme, ThemeProvider
 from textual.timer import Timer
+from textual.tw import install_tw
 from textual.visual import SupportsVisual, Visual
 from textual.widget import AwaitMount, Widget
 from textual.widgets._toast import ToastRack
@@ -2477,6 +2478,7 @@ class App(Generic[ReturnType], DOMNode):
             node: Node to update.
             animate: Enable animation?
         """
+        install_tw(self, refresh=False)
         if isinstance(node, App):
             for screen in reversed(self.screen_stack):
                 screen.update_node_styles(animate=animate)
@@ -3398,6 +3400,7 @@ class App(Generic[ReturnType], DOMNode):
                             events.Resize.from_dimensions(self.size, None)
                         )
                         default_screen = self.screen
+                        install_tw(self, refresh=False)
                         self.stylesheet.apply(self)
                         await self._dispatch_message(events.Mount())
                         self.check_idle()
@@ -3765,6 +3768,7 @@ class App(Generic[ReturnType], DOMNode):
             animate: Also execute CSS animations.
         """
         stylesheet = self.app.stylesheet
+        install_tw(self, refresh=False)
         stylesheet.set_variables(self.get_css_variables())
         stylesheet.reparse()
         stylesheet.update(self.app, animate=animate)

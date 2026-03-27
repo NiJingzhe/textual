@@ -45,6 +45,18 @@ def test_validate():
         node.toggle_class("1")
 
 
+def test_tailwind_style_classes_are_preprocessed_transparently():
+    node = DOMNode(classes="w-[42] bg-[#334155] text-42px bg-blue-500")
+
+    assert node.classes == frozenset(
+        {"w-[42]", "bg-[#334155]", "text-42px", "bg-blue-500"}
+    )
+    assert any(class_name.startswith("_tw_") for class_name in node._compiled_classes)
+
+    with pytest.raises(ValueError):
+        DOMNode(classes="text-[42px]")
+
+
 def test_classes_setter():
     node = DOMNode(classes="foo bar")
     assert node.classes == frozenset({"foo", "bar"})

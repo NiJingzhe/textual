@@ -24,8 +24,13 @@ if TYPE_CHECKING:
 
 __all__ = [
     "__version__",  # type: ignore
+    "TailwindTCSS",
+    "install_tw",
     "log",
     "on",
+    "tailwind_tcss",
+    "tw",
+    "tw_css",
     "work",
 ]
 
@@ -43,7 +48,7 @@ if TYPE_CHECKING:
 
 else:
 
-    def __getattr__(name: str) -> str:
+    def __getattr__(name: str) -> str | object:
         """Lazily get the version."""
         if name == "__version__":
             from importlib.metadata import version
@@ -205,3 +210,12 @@ Example:
 
 
 """
+
+
+from textual.tw import (
+    TailwindTCSS,
+    install_tw,
+    tailwind_tcss,
+    tw,
+    tw_css,
+)

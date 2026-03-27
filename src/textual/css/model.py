@@ -82,7 +82,7 @@ def _check_class(name: str, node: DOMNode) -> bool:
     Returns:
         `True` if the selector matches.
     """
-    return name in node._classes
+    return name in node._effective_classes
 
 
 def _check_id(name: str, node: DOMNode) -> bool:
