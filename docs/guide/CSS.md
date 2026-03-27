@@ -169,6 +169,66 @@ With the CSS in place, the output looks very different:
 
 You can also set the `CSS_PATH` class variable to a list of paths. Textual will combine the rules from all of the supplied paths.
 
+### Bundled Tailwind-style utilities
+
+Textual also ships with a bundled `tailwind.tcss` utility sheet that you can use as a starting point for utility-class workflows.
+
+The bundled sheet is intentionally small. It focuses on common layout, alignment, spacing, border, text-behavior, cursor, and transition utilities. For custom sizes, colors, opacity, offsets, and hover states, prefer arbitrary-value classes such as `w-[42]`, `bg-[#334155]`, `opacity-[55%]`, or `hover:bg-[#475569]`.
+
+If you want to keep everything in Python, import the stylesheet text and append your own CSS:
+
+```python
+from textual import tailwind_tcss
+from textual.app import App
+
+
+class UtilityApp(App[None]):
+    CSS = tailwind_tcss() + """
+    Screen {
+        align: center middle;
+    }
+    """
+```
+
+If you prefer to keep the utility sheet as a real file in your project, use the `export-twcss` CLI command:
+
+```bash
+export-twcss ./styles
+```
+
+This writes `tailwind.tcss` into `./styles`. You can also export to a specific file name:
+
+```bash
+export-twcss ./styles/textual-tailwind.tcss
+```
+
+Or write the bundled stylesheet to standard output:
+
+```bash
+export-twcss --stdout > ./styles/tailwind.tcss
+```
+
+Once the file exists, reference it with `CSS_PATH` like any other Textual stylesheet.
+
+For example, these two approaches work well together:
+
+```python
+from textual.app import App, ComposeResult
+from textual.containers import Container
+from textual.widgets import Label
+from textual import tailwind_tcss
+
+
+class UtilityApp(App[None]):
+    CSS = tailwind_tcss()
+
+    def compose(self) -> ComposeResult:
+        with Container(classes="border-round px-4 py-2 bg-[#0f172a] w-[42]"):
+            yield Label("Hello", classes="text-center text-[#f8fafc]")
+```
+
+Here `border-round`, `px-4`, and `py-2` come from the bundled stylesheet, while `bg-[#0f172a]`, `w-[42]`, and `text-[#f8fafc]` are handled by the arbitrary-value compiler.
+
 ### Why CSS?
 
 It is reasonable to ask why use CSS at all? Python is a powerful and expressive language. Wouldn't it be easier to set styles in your `.py` files?

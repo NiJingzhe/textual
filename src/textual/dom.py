@@ -49,6 +49,7 @@ from textual.message_pump import MessagePump
 from textual.reactive import Reactive, ReactiveError, _Mutated, _watch
 from textual.style import Style as VisualStyle
 from textual.timer import Timer
+from textual.tw import tw as _tw
 from textual.walk import walk_breadth_first, walk_breadth_search_id, walk_depth_first
 from textual.worker_manager import WorkerManager
 
@@ -124,8 +125,7 @@ class _ClassesDescriptor:
             class_names = set(classes.split())
         else:
             class_names = set(classes)
-        check_identifiers("class name", *class_names)
-        obj._classes = class_names
+        obj._classes, obj._compiled_classes = obj._preprocess_class_names(class_names)
         obj.update_node_styles()
 
 
@@ -191,6 +191,7 @@ class DOMNode(MessagePump):
         classes: str | None = None,
     ) -> None:
         self._classes: set[str] = set()
+        self._compiled_classes: set[str] = set()
         self._name = name
         self._id = None
         if id is not None:
@@ -198,8 +199,7 @@ class DOMNode(MessagePump):
             self._id = id
 
         _classes = classes.split() if classes else []
-        check_identifiers("class name", *_classes)
-        self._classes.update(_classes)
+        self._classes, self._compiled_classes = self._preprocess_class_names(_classes)
 
         self._nodes: NodeList = NodeList(self)
         self._css_styles: Styles = Styles(self)
@@ -867,6 +867,12 @@ class DOMNode(MessagePump):
         return frozenset(self.get_pseudo_classes())
 
     @property
+    def _effective_classes(self) -> set[str]:
+        """All classes used for matching, including compiled utility aliases."""
+
+        return self._classes | self._compiled_classes
+
+    @property
     def css_path_nodes(self) -> list[DOMNode]:
         """A list of nodes from the App to this node, forming a "path".
 
@@ -890,7 +896,7 @@ class DOMNode(MessagePump):
         """
         selectors: set[str] = {
             "*",
-            *(f".{class_name}" for class_name in self._classes),
+            *(f".{class_name}" for class_name in self._effective_classes),
             *self._css_types,
         }
         if self._id is not None:
@@ -1774,6 +1780,21 @@ class DOMNode(MessagePump):
         self.classes = classes
         return self
 
+    def _class_preprocess_app(self) -> App[Any] | None:
+        try:
+            app = self.app
+        except (AttributeError, NoActiveAppError):
+            return None
+        return app if hasattr(app, "stylesheet") else None
+
+    def _preprocess_class_names(
+        self, class_names: Iterable[str]
+    ) -> tuple[set[str], set[str]]:
+        return _tw.preprocess(class_names, app=self._class_preprocess_app())
+
+    def _refresh_compiled_classes(self) -> None:
+        _, self._compiled_classes = self._preprocess_class_names(self._classes)
+
     def update_node_styles(self, animate: bool = True) -> None:
         """Request an update of this node's styles.
 
@@ -1794,9 +1815,10 @@ class DOMNode(MessagePump):
         Returns:
             Self.
         """
-        check_identifiers("class name", *class_names)
+        class_names, _ = self._preprocess_class_names(class_names)
         old_classes = self._classes.copy()
         self._classes.update(class_names)
+        self._refresh_compiled_classes()
         if old_classes == self._classes:
             return self
         if update:
@@ -1813,9 +1835,10 @@ class DOMNode(MessagePump):
         Returns:
             Self.
         """
-        check_identifiers("class name", *class_names)
+        class_names, _ = self._preprocess_class_names(class_names)
         old_classes = self._classes.copy()
         self._classes.difference_update(class_names)
+        self._refresh_compiled_classes()
         if old_classes == self._classes:
             return self
         if update:
@@ -1831,9 +1854,10 @@ class DOMNode(MessagePump):
         Returns:
             Self.
         """
-        check_identifiers("class name", *class_names)
+        class_names, _ = self._preprocess_class_names(class_names)
         old_classes = self._classes.copy()
         self._classes.symmetric_difference_update(class_names)
+        self._refresh_compiled_classes()
         if old_classes == self._classes:
             return self
         self.update_node_styles()
