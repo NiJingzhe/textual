@@ -55,6 +55,8 @@ _UTILITY_TO_DECLARATION = {
 
 @dataclass(frozen=True)
 class CompiledUtility:
+    """A compiled Tailwind-style utility class and its generated TCSS."""
+
     alias: str
     css_rule: str
     signature: str
@@ -212,7 +214,9 @@ class TailwindTCSS:
     @staticmethod
     def _validate_identifier(token: str) -> None:
         if _IDENTIFIER_RE.fullmatch(token) is None:
-            raise ValueError(
+            from textual.dom import BadIdentifier
+
+            raise BadIdentifier(
                 f"{token!r} is an invalid class name; identifiers must contain only "
                 "letters, numbers, underscores, or hyphens, and must not begin with a number."
             )

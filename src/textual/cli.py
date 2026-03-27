@@ -1,3 +1,5 @@
+"""Command line helpers for bundled Textual utilities."""
+
 from __future__ import annotations
 
 import argparse
@@ -12,7 +14,7 @@ def export_twcss(argv: Sequence[str] | None = None) -> int:
 
     parser = argparse.ArgumentParser(
         prog="export-twcss",
-        description="Write Textual's bundled Tailwind-style TCSS to a file.",
+        description="Write or print Textual's bundled Tailwind-style TCSS.",
     )
     parser.add_argument(
         "destination",
