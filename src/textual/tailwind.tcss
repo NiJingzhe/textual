@@ -397,6 +397,7 @@ $tw-transition-slow: 280ms in_out_cubic 0ms;
     padding-bottom: 4;
 }
 
+
 .m-0 {
     margin: 0;
 }
@@ -841,6 +842,10 @@ $tw-transition-slow: 280ms in_out_cubic 0ms;
 }
 
 /* Transitions */
+.transition-all {
+    transition: color $tw-transition-fast, background $tw-transition-fast, tint $tw-transition-fast, opacity $tw-transition-fast, text-opacity $tw-transition-fast, offset $tw-transition-normal, width $tw-transition-normal, height $tw-transition-normal, min-width $tw-transition-normal, min-height $tw-transition-normal, max-width $tw-transition-normal, max-height $tw-transition-normal;
+}
+
 .transition-colors {
     transition: color $tw-transition-fast, background $tw-transition-fast, tint $tw-transition-fast;
 }
@@ -863,4 +868,11 @@ $tw-transition-slow: 280ms in_out_cubic 0ms;
 
 .transition-slow-colors {
     transition: color $tw-transition-slow, background $tw-transition-slow, tint $tw-transition-slow;
+}
+
+/* Keep common single-line widgets visually compact by default. */
+Input, Label {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: 1;
 }

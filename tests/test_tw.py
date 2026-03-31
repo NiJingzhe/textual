@@ -1,6 +1,7 @@
 from textual.app import App, ComposeResult
 from textual.color import Color
-from textual.widgets import Label
+from textual import tailwind_tcss
+from textual.widgets import Button, Label
 
 from textual.tw import TailwindTCSS
 
@@ -25,6 +26,24 @@ def test_tailwind_tcss_compiles_hover_variants() -> None:
 
     assert f".{alias}:hover" in compiler.css
     assert "background: #334155;" in compiler.css
+
+
+def test_tailwind_tcss_compiles_static_hover_variants() -> None:
+    compiler = TailwindTCSS()
+
+    alias = compiler("hover:bg-blue-500")
+
+    assert f".{alias}:hover" in compiler.css
+    assert "background: #3B82F6;" in compiler.css
+
+
+def test_tailwind_tcss_compiles_static_focus_variants() -> None:
+    compiler = TailwindTCSS()
+
+    alias = compiler("dark:focus:border-round")
+
+    assert f".{alias}:dark:focus" in compiler.css
+    assert "border: round #334155;" in compiler.css
 
 
 def test_tailwind_tcss_preserves_plain_textual_classes() -> None:
@@ -83,3 +102,60 @@ async def test_tailwind_tcss_can_install_rules_after_mount() -> None:
         assert label.styles.opacity == 0.5
         assert str(label.styles.offset.x) == "-2"
         assert str(label.styles.offset.y) == "0"
+
+
+class StaticVariantTwApp(App[None]):
+    CSS = tailwind_tcss()
+
+    def compose(self) -> ComposeResult:
+        yield Button(
+            "Hover me",
+            id="hover-me",
+            classes="bg-blue-500 text-white transition-all hover:bg-blue-700 focus:border-round",
+        )
+
+
+class RecomposeTransitionTwApp(App[None]):
+    CSS = tailwind_tcss()
+
+    def compose(self) -> ComposeResult:
+        yield Button(
+            "Preset",
+            id="preset",
+            classes="bg-blue-500 text-white transition-all hover:bg-blue-700 focus:border-round",
+        )
+
+    def on_button_pressed(self) -> None:
+        self.refresh(recompose=True)
+
+
+async def test_tailwind_tcss_applies_static_hover_variants() -> None:
+    async with StaticVariantTwApp().run_test() as pilot:
+        button = pilot.app.query_one("#hover-me", Button)
+
+        assert button.styles.background == Color.parse("#3b82f6")
+
+        await pilot.hover("#hover-me")
+        await pilot.pause(0.4)
+
+        assert button.styles.background == Color.parse("#1d4ed8")
+
+
+async def test_tailwind_tcss_skips_auto_scalar_transition_animation() -> None:
+    async with StaticVariantTwApp().run_test() as pilot:
+        button = pilot.app.query_one("#hover-me", Button)
+
+        await pilot.click("#hover-me")
+        await pilot.pause(0.1)
+
+        assert button.has_focus
+
+
+async def test_tailwind_tcss_skips_auto_scalar_transition_animation_during_recompose() -> (
+    None
+):
+    async with RecomposeTransitionTwApp().run_test() as pilot:
+        await pilot.click("#preset")
+        await pilot.pause(0.1)
+
+        assert pilot.app.query_one("#preset", Button)
