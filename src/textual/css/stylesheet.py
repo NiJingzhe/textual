@@ -19,6 +19,7 @@ from textual.css.errors import StylesheetError
 from textual.css.match import _check_selectors
 from textual.css.model import RuleSet
 from textual.css.parse import parse
+from textual.css.scalar import Scalar, ScalarOffset
 from textual.css.styles import RulesMap, Styles
 from textual.css.tokenize import Token, tokenize_values
 from textual.css.tokenizer import TokenError
@@ -29,6 +30,39 @@ from textual.style import Style
 from textual.widget import Widget
 
 _DEFAULT_STYLES = Styles()
+
+
+def _contains_auto_scalar(value: object) -> bool:
+    """Check if a stylesheet render-rule value contains an auto scalar.
+
+    CSS transitions can safely animate fixed Scalars, but `auto` values don't have
+    a stable interpolation path. When they appear in transition presets such as
+    `transition-all`, the safest behavior is to apply the new value immediately.
+    """
+
+    if isinstance(value, Scalar):
+        return value.is_auto
+    if isinstance(value, ScalarOffset):
+        return value.x.is_auto or value.y.is_auto
+    return False
+
+
+def _can_transition_render_rule(
+    old_render_value: object, new_render_value: object
+) -> bool:
+    """Return `True` if a render-rule transition can be animated safely."""
+
+    if _contains_auto_scalar(old_render_value) or _contains_auto_scalar(
+        new_render_value
+    ):
+        return False
+
+    if isinstance(old_render_value, (Scalar, ScalarOffset)) or isinstance(
+        new_render_value, (Scalar, ScalarOffset)
+    ):
+        return isinstance(old_render_value, type(new_render_value))
+
+    return True
 
 
 class StylesheetParseError(StylesheetError):
@@ -678,7 +712,9 @@ class Stylesheet:
                     or animator.is_being_animated(base, key)
                 ):
                     transition = new_styles._get_transition(key)
-                    if transition is not None:
+                    if transition is not None and _can_transition_render_rule(
+                        old_render_value, new_render_value
+                    ):
                         duration, easing, delay = transition
                         animator.animate(
                             base,

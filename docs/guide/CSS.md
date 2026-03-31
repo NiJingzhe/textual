@@ -173,7 +173,28 @@ You can also set the `CSS_PATH` class variable to a list of paths. Textual will 
 
 Textual also ships with a bundled `tailwind.tcss` utility sheet that you can use as a starting point for utility-class workflows.
 
-The bundled sheet is intentionally small. It focuses on common layout, alignment, spacing, border, text-behavior, cursor, and transition utilities. For custom sizes, colors, opacity, offsets, and hover states, prefer arbitrary-value classes such as `w-[42]`, `bg-[#334155]`, `opacity-[55%]`, or `hover:bg-[#475569]`.
+The bundled sheet is intentionally small. It focuses on common layout, alignment, spacing, border, text-behavior, cursor, and transition utilities. For custom sizes, colors, opacity, offsets, and state styles, prefer arbitrary-value classes such as `w-[42]`, `bg-[#334155]`, `opacity-[55%]`, or `hover:bg-[#475569]`.
+
+Pseudo-class prefixes now work with both bundled static utilities and arbitrary-value utilities. For example, all of these are valid:
+
+```python
+classes="bg-blue-500 text-white transition-all hover:bg-blue-700 focus:border-round"
+classes="dark:hover:bg-slate-700 disabled:opacity-[50%]"
+classes="focus-within:bg-[#1e293b] odd:bg-[#0f172a]"
+```
+
+These pseudo prefixes use Textual's native pseudo classes such as `hover`, `focus`, `blur`, `focus-within`, `disabled`, `enabled`, `dark`, `light`, `first-child`, `last-child`, `odd`, `even`, and `empty`.
+
+Animation support in this utility layer is transition-based, because Textual CSS doesn't currently have browser-style keyframe animations. In practice that means you combine a transition utility with a pseudo/state utility:
+
+```python
+classes="transition-colors hover:bg-blue-700"
+classes="transition-all focus:border-round focus:translate-x-[1]"
+```
+
+The bundled sheet includes `transition-colors`, `transition-opacity`, `transition-offset`, `transition-size`, `transition-basic`, `transition-slow-colors`, and `transition-all`.
+
+When one of those transition presets touches an auto-sized scalar such as `width: auto` or `height: auto`, Textual now falls back to applying that scalar change immediately instead of trying to animate an unsupported `auto` value. Color and opacity parts of the same style update still animate normally.
 
 If you want to keep everything in Python, import the stylesheet text and append your own CSS:
 

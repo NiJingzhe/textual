@@ -15,6 +15,7 @@ def test_tailwind_stylesheet_parses() -> None:
     assert ".border-round" in stylesheet.css
     assert ".px-4" in stylesheet.css
     assert ".transition-basic" in stylesheet.css
+    assert ".transition-all" in stylesheet.css
     assert ".hover-bg-blue-700:hover" not in stylesheet.css
     assert ".w-40" not in stylesheet.css
 
