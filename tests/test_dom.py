@@ -57,6 +57,35 @@ def test_tailwind_style_classes_are_preprocessed_transparently():
         DOMNode(classes="text-[42px]")
 
 
+def test_classes_setter_updates_styles_for_utility_classes():
+    class StyledNode(DOMNode):
+        def __init__(self) -> None:
+            self.update_calls = 0
+            super().__init__()
+
+        def update_node_styles(self, animate: bool = True) -> None:
+            self.update_calls += 1
+
+    node = StyledNode()
+
+    node.classes = "w-[42]"
+    assert node.classes == frozenset({"w-[42]"})
+    assert any(class_name.startswith("_tw_") for class_name in node._compiled_classes)
+    assert node.update_calls == 1
+
+    node.classes = "w-[42]"
+    assert node.update_calls == 1
+
+
+def test_remove_class_recomputes_compiled_utility_classes():
+    node = DOMNode(classes="w-[42] bg-[#334155]")
+
+    node.remove_class("w-[42]")
+
+    assert node.classes == frozenset({"bg-[#334155]"})
+    assert len(node._compiled_classes) == 1
+
+
 def test_classes_setter():
     node = DOMNode(classes="foo bar")
     assert node.classes == frozenset({"foo", "bar"})

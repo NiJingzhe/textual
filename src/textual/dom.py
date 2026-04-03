@@ -125,8 +125,12 @@ class _ClassesDescriptor:
             class_names = set(classes.split())
         else:
             class_names = set(classes)
-        obj._classes, obj._compiled_classes = obj._preprocess_class_names(class_names)
-        obj.update_node_styles()
+
+        new_classes, new_compiled_classes = obj._preprocess_class_names(class_names)
+        if obj._classes != new_classes or obj._compiled_classes != new_compiled_classes:
+            obj._classes = new_classes
+            obj._compiled_classes = new_compiled_classes
+            obj.update_node_styles()
 
 
 @rich.repr.auto
@@ -1815,11 +1819,15 @@ class DOMNode(MessagePump):
         Returns:
             Self.
         """
-        class_names, _ = self._preprocess_class_names(class_names)
+        class_names, compiled_class_names = self._preprocess_class_names(class_names)
         old_classes = self._classes.copy()
+        old_compiled_classes = self._compiled_classes.copy()
         self._classes.update(class_names)
-        self._refresh_compiled_classes()
-        if old_classes == self._classes:
+        self._compiled_classes.update(compiled_class_names)
+        if (
+            old_classes == self._classes
+            and old_compiled_classes == self._compiled_classes
+        ):
             return self
         if update:
             self.update_node_styles()
@@ -1837,9 +1845,13 @@ class DOMNode(MessagePump):
         """
         class_names, _ = self._preprocess_class_names(class_names)
         old_classes = self._classes.copy()
+        old_compiled_classes = self._compiled_classes.copy()
         self._classes.difference_update(class_names)
         self._refresh_compiled_classes()
-        if old_classes == self._classes:
+        if (
+            old_classes == self._classes
+            and old_compiled_classes == self._compiled_classes
+        ):
             return self
         if update:
             self.update_node_styles()
